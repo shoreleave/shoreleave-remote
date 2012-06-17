@@ -1,0 +1,78 @@
+shoreleave
+==========
+
+A smarter client-side in ClojureScript
+
+###Shoreleave is a collection of integrated libraries that focuses on:
+
+ * Security
+ * Idiomatic interfaces
+ * Common client-side strategies
+ * HTML5 capabilities
+ * ClojureScript's advantages
+
+It builds upon efforts found in other ClojureScript projects, such as [Fetch](https://github.com/ibdknox/fetch) and [ClojureScript:One](http://clojurescriptone.com/).
+
+
+Shoreleave-remote Overview
+------------------------
+The `remote` namespace provides CSRF-protected and consistent interfaces for XHR, Pooled XHR, JSONP, and HTTP-RPC calls.
+
+The CSRF protection is automatic if your Clojure server is using the [ring-anti-forgery](https://github.com/weavejester/ring-anti-forgery) middleware.
+
+The HTTP-RPC is built upon [Fetch](https://github.com/ibdknox/fetch) and allows for exposing a server-side namespace as a client-side API, via a single server-side call, `remote-ns`.
+
+A typical [Noir](http://www.webnoir.org/) setup might look like:
+
+```clojure
+(ns example
+  (:require [noir.shoreleave.rpc :as rpc]))
+
+;; ...
+
+;; The Base Web Server
+;; ---------------------
+;; Serve every view file found in `src/example/views`
+(server/load-views "src/example/views/")
+
+;; Remote Namespaces
+;; -----------------
+(rpc/activate-remotes!)
+(rpc/remote-ns 'example.api :as "api") ; Note, you don't have to include example.api in this .clj file
+
+;; Middleware
+;;-----------
+(server/add-middleware ring.middleware.gzip/wrap-gzip)
+(server/add-middleware ring.middleware.file-info/wrap-file-info)
+(server/add-middleware ring.middleware.anti-forgery/wrap-anti-forgery)
+```
+
+You can also define single "global" rpc functions:
+
+```clojure
+(defremote ping []
+  (do
+    (println "Pinged by client!")
+    "PONG - from the server"))
+```
+
+
+Plays well with others
+----------------------
+Shoreleave makes no assumptions about other libraries you might be using in your app.
+
+I have found it to pair particularly well with [Enfocus](https://github.com/ckirkendall/enfocus)
+
+
+Examples and usage
+------------------
+Please the github wiki for examples of each library feature
+
+
+License
+-------
+Copyright © 2012 Paul deGrandis
+
+Distributed under the Eclipse Public License, the same as Clojure.
+Please see the `LICENSE_epl.html` for details.
+

@@ -1,0 +1,44 @@
+# Java related
+pom.xml
+*jar
+*.class
+
+# Leiningen
+/target
+/classes
+/lib
+/native
+/checkouts
+.lein-deps-sum
+.lein-failures
+.lein-cljsbuild-repl
+/.lein-plugins
+/.lein-*
+/.repl
+
+# Python
+*.pyc
+*.pyo
+/__pycache__/
+
+# Ruby
+Gemfile.lock
+
+# Temp Files
+*.orig
+*~
+.*.swp
+.*.swo
+*.tmp
+*.bak
+
+# OS X
+.DS_Store
+
+# Logging
+*.log
+
+# Docs
+/autodoc
+/docs
+
