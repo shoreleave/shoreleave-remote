@@ -5,7 +5,7 @@
   Adapted from Bobby Calderwood's Trail framework:
   <https://github.com/bobby/trail>
   
-  Enahnced to support uniform calling format and CSRF protection"}
+  Enhanced to support uniform calling format and CSRF protection"}
   shoreleave.remotes.request
   (:require [cljs.reader :as reader]
             [clojure.browser.event :as event]
