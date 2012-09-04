@@ -22,6 +22,10 @@ The CSRF protection is automatic if your Clojure server is using the [ring-anti-
 
 The HTTP-RPC is built upon [Fetch](https://github.com/ibdknox/fetch) and allows for exposing a server-side namespace as a client-side API, via a single server-side call, `remote-ns`.
 
+Please see the Marginalia docs for [more information](http://shoreleave.github.com/shoreleave-remote).
+
+- - -
+
 A typical [Noir](http://www.webnoir.org/) setup might look like:
 
 ```clojure
