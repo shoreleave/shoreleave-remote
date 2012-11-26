@@ -10,6 +10,13 @@
 ;; ###Attention:
 ;; These are intended for internal use only.  You should not use these directly.
 
+(def event-types
+  {:on-complete goog.net.EventType.COMPLETE
+   :on-success goog.net.EventType.SUCCESS
+   :on-error goog.net.EventType.ERROR
+   :on-timeout goog.net.EventType.TIMEOUT
+   :on-ready goog.net.EventType.READY})
+
 (defn rand-id-str
   "Generate a random string that is suitable for request IDs"
   []
