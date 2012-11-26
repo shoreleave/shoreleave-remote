@@ -26,11 +26,13 @@
 (defn xhr [route & opts]
   (let [req (goog.net.XhrIo.)
         [method uri] (common/parse-route route)
-        {:keys [on-success content headers]} (apply hash-map opts)
+        {:keys [on-success on-error content headers]} (apply hash-map opts)
         content (common/csrf-protected content method)
         data (common/->data-str content)
-        callback (common/->simple-callback on-success)]
-    (when callback
-      (events/listen req goog.net.EventType/COMPLETE #(callback req)))
+        suc-callback (common/->simple-callback on-success)
+        err-callback (common/->simple-callback (or on-error #(js/console.log (str "XHR ERROR: " %))))]
+    (when suc-callback
+      (events/listen req (common/event-types :on-success) #(suc-callback req))
+      (events/listen req (common/event-types :on-error) #(err-callback req)))
     (.send req uri method data (when headers (clj->js headers)))))
 
