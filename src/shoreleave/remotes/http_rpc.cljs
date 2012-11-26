@@ -25,15 +25,30 @@
 (def ^:dynamic *remote-uri* "/_fetch")
 
 (defn remote-callback [remote params callback & extra-content]
-  (xhr/xhr [:post *remote-uri*]
-           :content (merge
-                      {:remote remote
-                       :params (pr-str params)}
-                      (apply hash-map extra-content))
-           :on-success (when callback
-                         (fn [data]
-                           (let [data (if (= data "") "nil" data)]
-                             (callback (reader/read-string data)))))))
+  (if (map? callback)
+    (let [{:keys [on-success on-error]} callback]
+      (xhr/xhr [:post *remote-uri*]
+               :content (merge
+                          {:remote remote
+                           :params (pr-str params)}
+                          (apply hash-map extra-content))
+               :on-success (when on-success
+                             (fn [data]
+                               (let [data (if (= data "") "nil" data)]
+                                 (on-success (reader/read-string data)))))
+               :on-error (when on-error
+                           (fn [data]
+                             (let [data (if (= data "") "nil" data)]
+                               (on-error (reader/read-string data)))))))
+    (xhr/xhr [:post *remote-uri*]
+             :content (merge
+                        {:remote remote
+                         :params (pr-str params)}
+                        (apply hash-map extra-content))
+             :on-success (when callback
+                           (fn [data]
+                             (let [data (if (= data "") "nil" data)]
+                               (callback (reader/read-string data))))))))
 
 ; TODO I believe there is an error with the xhrManager getting back Clojure data, but I haven't confirmed it
 #_(defn remote-callback [remote params callback & extra-content]
