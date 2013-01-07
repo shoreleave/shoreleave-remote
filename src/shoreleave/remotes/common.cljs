@@ -4,8 +4,7 @@
             [goog.Uri.QueryData :as query-data]
             [goog.structs :as structs]
             [goog.string :as gstr]
-            [shoreleave.browser.cookies :as cookies])
-  (:use [shoreleave.common :only [clj->js]]))
+            [shoreleave.browser.cookies :as cookies]))
 
 ;; ###Attention:
 ;; These are intended for internal use only.  You should not use these directly.
