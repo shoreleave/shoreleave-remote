@@ -1,7 +1,6 @@
 (ns shoreleave.remotes.jsonp
   "Shoreleave's JSONP"
-  (:require [goog.net.Jsonp :as jsonp]
-            [shoreleave.common :as common]))
+  (:require [goog.net.Jsonp :as jsonp]))
 
 ;; JSON with padding - JSONP
 ;; -------------------------
@@ -24,10 +23,9 @@
 (defn jsonp [uri & opts]
   (let [{:keys [on-success on-timeout content callback-name callback-value timeout-ms]} opts
         req (goog.net.Jsonp. uri callback-name)
-        data (when content (common/clj->js content))
+        data (when content (clj->js content))
         on-success (when on-success #(on-success (js->clj % :keywordize-keys true)))
-        on-timeout (when on-timeout #(on-timeout (js->clj % :keywordize-keys true)))
-        ]
+        on-timeout (when on-timeout #(on-timeout (js->clj % :keywordize-keys true)))]
     (when timeout-ms (.setRequestTimeout req timeout-ms))
     (.send req data on-success on-timeout callback-value)))
 
