@@ -34,7 +34,7 @@
     extra-content - varlist of key-value pairs, extra-content to merge into the payload/content map."
   [remote params callback & extra-content]
   (if (map? callback)
-    (let [{:keys [on-success on-error]} callback]
+    (let [{:keys [on-success on-error]} callback] ;;TODO make xhr take *ANY* of the event triggers
       (xhr/xhr [:post *remote-uri*]
                :content (merge
                           {:remote remote
