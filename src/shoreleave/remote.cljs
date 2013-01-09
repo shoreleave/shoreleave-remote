@@ -2,8 +2,7 @@
   "Shoreleave's remote calling library"
   (:require [shoreleave.remotes.request :as request]
             [shoreleave.remotes.jsonp :as jsonp]
-            [shoreleave.remotes.http-rpc :as rpc]
-            [shoreleave.remotes.jquery :as jq]))
+            [shoreleave.remotes.http-rpc :as rpc]))
 
 ;; Remotes
 ;; -------
@@ -44,14 +43,4 @@
 ;; is called, and the results are sent back over xhr.  All forms of Clojure data
 ;; are supported
 (def remote-callback rpc/remote-callback)
-
-(defn jq-jsonp
-  "Use jQuery's ajax calls to perform a JSONP request"
-  [uri & opts]
-  (let [{:keys [on-success content callback-name]} opts]
-    (jq/ajax uri
-             :data content
-             :success #(on-success (js->clj % :keywordize-keys true))
-             :dataType "jsonp"
-             :jsonp callback-name)))
 
