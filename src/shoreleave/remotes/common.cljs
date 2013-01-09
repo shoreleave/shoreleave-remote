@@ -4,7 +4,8 @@
             [goog.Uri.QueryData :as query-data]
             [goog.structs :as structs]
             [goog.string :as gstr]
-            [shoreleave.browser.cookies :as cookies]))
+            [shoreleave.browser.cookies :as cookies]
+            [shoreleave.remotes.protocols :as r-protocols]))
 
 ;; ###Attention:
 ;; These are intended for internal use only.  You should not use these directly.
@@ -56,10 +57,26 @@
     (merge content-map {:__anti-forgery-token anti-forgery-token})
     content-map))
 
+(extend-protocol r-protocols/ITransportData
+
+  string
+  (-data-str [t] t)
+
+  cljs.core/PersistentArrayMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  cljs.core/PersistentHashMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  cljs.core/PersistentTreeMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  default
+  (-data-str [t]
+    (str (clj->js t))))
+
 (defn ->data-str
-  "Generate a query-data-string, given Clojure data (usually a hash-map)"
+  "Generate a query-data-string, given Clojure data (usually a hash-map or string)"
   [d]
-  (let [cur (clj->js d)
-        query (query-data/createFromMap (structs/Map. cur))]
-    (str query)))
- 
+  (-data-str d))
+
