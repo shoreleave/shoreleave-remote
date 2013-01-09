@@ -15,9 +15,12 @@
 ;; The `(xhr ...)` function takes a mandatory `route` argument, in the format [:method URL-str] -> [:get "/fetch-recent-results"]
 ;; URLs/Routes can also be expressed as `\"http://www.google.com\"` with a default GET method added
 ;;
+;; By default, if you don't specify an `:on-error` handler, errors will be logged to the console
+;;
 ;; Additional options are passed in as key'd args:
 ;;
 ;;  * :on-success `(fn [result] (js/console.log "This is a callback function for successful requests"))`
+;;  * :on-error `(fn [result] (js/console.log "We failed."))`
 ;;  * :content `{:one-arg "Sending this to the server" :another 5}`
 ;;  * :headers `{}` - additional header information
 ;;
