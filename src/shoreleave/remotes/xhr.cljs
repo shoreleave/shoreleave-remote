@@ -2,8 +2,7 @@
   "Shoreleave's XmlHttpRequest"
   (:require [goog.net.XhrIo :as xhr]
             [goog.events :as events]
-            [shoreleave.remotes.common :as common])
-  (:use [shoreleave.common :only [clj->js]]))
+            [shoreleave.remotes.common :as common]))
 
 ;; XMLHttpRequests - `xhr`
 ;; -----------------------

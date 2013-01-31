@@ -17,6 +17,8 @@
    :on-timeout goog.net.EventType.TIMEOUT
    :on-ready goog.net.EventType.READY})
 
+(def ^:dynamic *csrf-token-name* :__anti-forgery-token)
+
 (defn rand-id-str
   "Generate a random string that is suitable for request IDs"
   []
@@ -53,8 +55,8 @@
   Content is always sent to the server as a map (that later gets converted accordingly)"
   [content-map method]
   (if-let [anti-forgery-token (and (= method "POST")
-                                   (:__anti-forgery-token cookies/cookies))]
-    (merge content-map {:__anti-forgery-token anti-forgery-token})
+                                   (*csrf-token-name* cookies/cookies))]
+    (merge content-map {*csrf-token-name* anti-forgery-token})
     content-map))
 
 (extend-protocol r-protocols/ITransportData
@@ -73,10 +75,11 @@
 
   default
   (-data-str [t]
-    (str (clj->js t))))
+  ;  (str (clj->js t))
+    (str (query-data/createFromMap (structs/Map. (clj->js t))))))
 
 (defn ->data-str
   "Generate a query-data-string, given Clojure data (usually a hash-map or string)"
   [d]
-  (-data-str d))
+  (r-protocols/-data-str d))
 

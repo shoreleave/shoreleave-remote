@@ -22,7 +22,7 @@
 ;;
 ;;      (srh/remote-callback "ping" [] #(js/alert %))
 
-(def ^:dynamic *remote-uri* "/_fetch")
+(def ^:dynamic *remote-uri* "/_shoreleave")
 
 (defn remote-callback
   "Call a remote-callback on the server.
