@@ -4,11 +4,21 @@
             [goog.Uri.QueryData :as query-data]
             [goog.structs :as structs]
             [goog.string :as gstr]
-            [shoreleave.browser.cookies :as cookies])
-  (:use [shoreleave.common :only [clj->js]]))
+            [goog.net.EventType :as gevent]
+            [shoreleave.browser.cookies :as cookies]
+            [shoreleave.remotes.protocols :as r-protocols]))
 
 ;; ###Attention:
 ;; These are intended for internal use only.  You should not use these directly.
+
+(def event-types
+  {:on-complete goog.net.EventType.COMPLETE
+   :on-success goog.net.EventType.SUCCESS
+   :on-error goog.net.EventType.ERROR
+   :on-timeout goog.net.EventType.TIMEOUT
+   :on-ready goog.net.EventType.READY})
+
+(def ^:dynamic *csrf-token-name* :__anti-forgery-token)
 
 (defn rand-id-str
   "Generate a random string that is suitable for request IDs"
@@ -46,14 +56,31 @@
   Content is always sent to the server as a map (that later gets converted accordingly)"
   [content-map method]
   (if-let [anti-forgery-token (and (= method "POST")
-                                   (:__anti-forgery-token cookies/cookies))]
-    (merge content-map {:__anti-forgery-token anti-forgery-token})
+                                   (*csrf-token-name* cookies/cookies))]
+    (merge content-map {*csrf-token-name* anti-forgery-token})
     content-map))
 
+(extend-protocol r-protocols/ITransportData
+
+  string
+  (-data-str [t] t)
+
+  cljs.core/PersistentArrayMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  cljs.core/PersistentHashMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  cljs.core/PersistentTreeMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj->js t)))))
+
+  default
+  (-data-str [t]
+  ;  (str (clj->js t))
+    (str (query-data/createFromMap (structs/Map. (clj->js t))))))
+
 (defn ->data-str
-  "Generate a query-data-string, given Clojure data (usually a hash-map)"
+  "Generate a query-data-string, given Clojure data (usually a hash-map or string)"
   [d]
-  (let [cur (clj->js d)
-        query (query-data/createFromMap (structs/Map. cur))]
-    (str query)))
- 
+  (r-protocols/-data-str d))
+

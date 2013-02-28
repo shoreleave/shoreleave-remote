@@ -10,8 +10,7 @@
   (:require [cljs.reader :as reader]
             [clojure.browser.event :as event]
             [goog.net.XhrManager :as manager]
-            [shoreleave.remotes.common :as common])
-  (:use [shoreleave.common :only [clj->js]]))
+            [shoreleave.remotes.common :as common]))
 
 (def ^:private responders (atom {}))
 

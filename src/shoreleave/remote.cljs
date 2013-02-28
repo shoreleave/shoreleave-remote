@@ -2,8 +2,7 @@
   "Shoreleave's remote calling library"
   (:require [shoreleave.remotes.request :as request]
             [shoreleave.remotes.jsonp :as jsonp]
-            [shoreleave.remotes.http-rpc :as rpc]
-            [shoreleave.remotes.jquery :as jq]))
+            [shoreleave.remotes.http-rpc :as rpc]))
 
 ;; Remotes
 ;; -------
@@ -15,14 +14,8 @@
 ;; Additionally all calls to your own server are *CSRF-protected* if you're using
 ;; the anti-forgery ring middleware.
 ;;
-;; Additionally, if you use the jQuery remote calls, you'll want to to set
-;; you `cljsbuild` config accordingly for advanced compilation:
-;;
-;;      {
-;;       :optimizations :advanced
-;;       :externs ["externs/sljquery.js"]
-;;       ...
-;;      }
+;; jQuery remote calls are no longer support.
+;; You should use [jayq](https://github.com/ibdknox/jayq) directly if you need jQuery `ajax` calls. 
 
 ;; ###`request`
 ;; This is an XHR request that uses a pool of XHR handlers
@@ -35,23 +28,15 @@
 ;; so you should only use it with sources you trust.
 ;;
 ;; One great application is SOLR.  You can setup a SOLR server and pull search
-;; results directly into your client with JSONP
+;; results directly into your client with JSONP.
+;; You can see an example of the jsonp call in the DuckDuckGo service.
 (def jsonp jsonp/jsonp)
 
 ;; ###`remote-callback`
 ;; The foundation of the RPC system is a `remote-callback`.  This is a great way
 ;; to expose server-side functionality to the client.  A server's remote function
 ;; is called, and the results are sent back over xhr.  All forms of Clojure data
-;; are supported
+;; are supported.  Under the hood, `remote-callback` uses single xhr objects,
+;; not the request pool.
 (def remote-callback rpc/remote-callback)
-
-(defn jq-jsonp
-  "Use jQuery's ajax calls to perform a JSONP request"
-  [uri & opts]
-  (let [{:keys [on-success content callback-name]} opts]
-    (jq/ajax uri
-             :data content
-             :success #(on-success (js->clj % :keywordize-keys true))
-             :dataType "jsonp"
-             :jsonp callback-name)))
 
