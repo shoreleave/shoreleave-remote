@@ -3028,13 +3028,19 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>shoreleave/shoreleave-remote -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">shoreleave/shoreleave-remote</h1><h2 class="project-version">0.2.2</h2><br /><p>A smarter client-side with ClojureScript : Shoreleave's rpc/xhr/jsonp facilities</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">shoreleave/shoreleave-core</td><td class="dotted"><hr /></td><td class="dep-version">0.2.2</td></tr><tr><td class="dep-name">shoreleave/shoreleave-browser</td><td class="dotted"><hr /></td><td class="dep-version">0.2.2</td></tr></table></div><div class="dependencies"><h3>dev dependencies</h3><table><tr><td class="dep-name">lein-marginalia</td><td class="dotted"><hr /></td><td class="dep-version">0.7.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#shoreleave.remotes.macros">shoreleave.remotes.macros</a></li><li><a href="#shoreleave.remote">shoreleave.remote</a></li><li><a href="#shoreleave.remotes.common">shoreleave.remotes.common</a></li><li><a href="#shoreleave.remotes.http-rpc">shoreleave.remotes.http-rpc</a></li><li><a href="#shoreleave.remotes.jquery">shoreleave.remotes.jquery</a></li><li><a href="#shoreleave.remotes.jsonp">shoreleave.remotes.jsonp</a></li><li><a href="#shoreleave.remotes.request">shoreleave.remotes.request</a></li><li><a href="#shoreleave.remotes.xhr">shoreleave.remotes.xhr</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.macros" name="shoreleave.remotes.macros"><h1 class="project-name">shoreleave.remotes.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.macros)</pre></td></tr><tr><td class="docs">
+</script><title>shoreleave/shoreleave-remote -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">shoreleave/shoreleave-remote</h1><h2 class="project-version">0.3.0</h2><br /><p>A smarter client-side with ClojureScript : Shoreleave's rpc/xhr/jsonp facilities</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">shoreleave/shoreleave-core</td><td class="dotted"><hr /></td><td class="dep-version">0.3.0</td></tr><tr><td class="dep-name">shoreleave/shoreleave-browser</td><td class="dotted"><hr /></td><td class="dep-version">0.3.0</td></tr></table></div><div class="dependencies"><h3>dev dependencies</h3><table><tr><td class="dep-name">lein-marginalia</td><td class="dotted"><hr /></td><td class="dep-version">0.7.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#shoreleave.remotes.macros">shoreleave.remotes.macros</a></li><li><a href="#shoreleave.remote">shoreleave.remote</a></li><li><a href="#shoreleave.remotes.common">shoreleave.remotes.common</a></li><li><a href="#shoreleave.remotes.http-rpc">shoreleave.remotes.http-rpc</a></li><li><a href="#shoreleave.remotes.jsonp">shoreleave.remotes.jsonp</a></li><li><a href="#shoreleave.remotes.protocols">shoreleave.remotes.protocols</a></li><li><a href="#shoreleave.remotes.request">shoreleave.remotes.request</a></li><li><a href="#shoreleave.remotes.xhr">shoreleave.remotes.xhr</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.macros" name="shoreleave.remotes.macros"><h1 class="project-name">shoreleave.remotes.macros</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Macros to smooth over the use of RPC</p>
+</td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.macros)</pre></td></tr><tr><td class="docs"><p>The macro calls are preferred to the raw calls.
+Handling the "remote-name" correctly can be troublesome,
+and the macro ensures uniform handling.</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro rpc
   [[sym &amp; params] &amp; [destruct &amp; body]]
   (let [func (if destruct
-               `(fn ~destruct ~@body)
+               (if (some #{:on-success :on-error} body)
+                 (reduce (fn [callback-map [k v-form]] (assoc callback-map k `(fn ~destruct ~v-form)))
+                         {} (apply hash-map body))
+                 `(fn ~destruct ~@body))
                nil)]
     `(shoreleave.remotes.http-rpc/remote-callback ~(str sym)
                                                   ~(vec params)
@@ -3050,8 +3056,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remote
   (:require [shoreleave.remotes.request :as request]
             [shoreleave.remotes.jsonp :as jsonp]
-            [shoreleave.remotes.http-rpc :as rpc]
-            [shoreleave.remotes.jquery :as jq]))</pre></td></tr><tr><td class="docs"><h2>Remotes</h2>
+            [shoreleave.remotes.http-rpc :as rpc]))</pre></td></tr><tr><td class="docs"><h2>Remotes</h2>
 
 <p>A major part of complex client-side applications is remote calling.</p>
 
@@ -3060,15 +3065,8 @@ types of calls: XmlHTTPRequests (xhr), pooled xhr (request), JSONP, and RPC.
 Additionally all calls to your own server are <em>CSRF-protected</em> if you're using
 the anti-forgery ring middleware.</p>
 
-<p>Additionally, if you use the jQuery remote calls, you'll want to to set
-you <code>cljsbuild</code> config accordingly for advanced compilation:</p>
-
-<pre><code> {
-  :optimizations :advanced
-  :externs ["externs/sljquery.js"]
-  ...
- }
-</code></pre>
+<p>jQuery remote calls are no longer support.
+You should use <a href="https://github.com/ibdknox/jayq">jayq</a> directly if you need jQuery <code>ajax</code> calls. </p>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>`request`</h3>
 
 <p>This is an XHR request that uses a pool of XHR handlers
@@ -3080,32 +3078,34 @@ security certificates.  It relies upon you blindly evaluating the results,
 so you should only use it with sources you trust.</p>
 
 <p>One great application is SOLR.  You can setup a SOLR server and pull search
-results directly into your client with JSONP</p>
+results directly into your client with JSONP.
+You can see an example of the jsonp call in the DuckDuckGo service.</p>
 </td><td class="codes"><pre class="brush: clojure">(def jsonp jsonp/jsonp)</pre></td></tr><tr><td class="docs"><h3>`remote-callback`</h3>
 
 <p>The foundation of the RPC system is a <code>remote-callback</code>.  This is a great way
 to expose server-side functionality to the client.  A server's remote function
 is called, and the results are sent back over xhr.  All forms of Clojure data
-are supported</p>
-</td><td class="codes"><pre class="brush: clojure">(def remote-callback rpc/remote-callback)</pre></td></tr><tr><td class="docs"><p>Use jQuery's ajax calls to perform a JSONP request</p>
-</td><td class="codes"><pre class="brush: clojure">(defn jq-jsonp
-  [uri &amp; opts]
-  (let [{:keys [on-success content callback-name]} opts]
-    (jq/ajax uri
-             :data content
-             :success #(on-success (js-&gt;clj % :keywordize-keys true))
-             :dataType &quot;jsonp&quot;
-             :jsonp callback-name)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.common" name="shoreleave.remotes.common"><h1 class="project-name">shoreleave.remotes.common</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Common remote operations for packaging up calls</p>
+are supported.  Under the hood, <code>remote-callback</code> uses single xhr objects,
+not the request pool.</p>
+</td><td class="codes"><pre class="brush: clojure">(def remote-callback rpc/remote-callback)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.common" name="shoreleave.remotes.common"><h1 class="project-name">shoreleave.remotes.common</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Common remote operations for packaging up calls</p>
 </td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.common
   (:require [clojure.string :as cstr]
             [goog.Uri.QueryData :as query-data]
             [goog.structs :as structs]
             [goog.string :as gstr]
-            [shoreleave.browser.cookies :as cookies])
-  (:use [shoreleave.common :only [clj-&gt;js]]))</pre></td></tr><tr><td class="docs"><h3>Attention:</h3>
+            [goog.net.EventType :as gevent]
+            [shoreleave.browser.cookies :as cookies]
+            [shoreleave.remotes.protocols :as r-protocols]))</pre></td></tr><tr><td class="docs"><h3>Attention:</h3>
 
 <p>These are intended for internal use only.  You should not use these directly.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Generate a random string that is suitable for request IDs</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def event-types
+  {:on-complete goog.net.EventType.COMPLETE
+   :on-success goog.net.EventType.SUCCESS
+   :on-error goog.net.EventType.ERROR
+   :on-timeout goog.net.EventType.TIMEOUT
+   :on-ready goog.net.EventType.READY})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *csrf-token-name* :__anti-forgery-token)</pre></td></tr><tr><td class="docs"><p>Generate a random string that is suitable for request IDs</p>
 </td><td class="codes"><pre class="brush: clojure">(defn rand-id-str
   []
   (gstr/getRandomString))</pre></td></tr><tr><td class="docs"><p>Given the keyword form of a request method (<code>:post</code>),
@@ -3133,14 +3133,30 @@ are supported</p>
 </td><td class="codes"><pre class="brush: clojure">(defn csrf-protected
   [content-map method]
   (if-let [anti-forgery-token (and (= method &quot;POST&quot;)
-                                   (:__anti-forgery-token cookies/cookies))]
-    (merge content-map {:__anti-forgery-token anti-forgery-token})
-    content-map))</pre></td></tr><tr><td class="docs"><p>Generate a query-data-string, given Clojure data (usually a hash-map)</p>
+                                   (*csrf-token-name* cookies/cookies))]
+    (merge content-map {*csrf-token-name* anti-forgery-token})
+    content-map))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(extend-protocol r-protocols/ITransportData
+
+  string
+  (-data-str [t] t)
+
+  cljs.core/PersistentArrayMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj-&gt;js t)))))
+
+  cljs.core/PersistentHashMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj-&gt;js t)))))
+
+  cljs.core/PersistentTreeMap
+  (-data-str [t] (str (query-data/createFromMap (structs/Map. (clj-&gt;js t)))))
+
+  default
+  (-data-str [t]
+  ;  (str (clj-&gt;js t))
+    (str (query-data/createFromMap (structs/Map. (clj-&gt;js t))))))</pre></td></tr><tr><td class="docs"><p>Generate a query-data-string, given Clojure data (usually a hash-map or string)</p>
 </td><td class="codes"><pre class="brush: clojure">(defn -&gt;data-str
   [d]
-  (let [cur (clj-&gt;js d)
-        query (query-data/createFromMap (structs/Map. cur))]
-    (str query)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.http-rpc" name="shoreleave.remotes.http-rpc"><h1 class="project-name">shoreleave.remotes.http-rpc</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Remote procedure calls over HTTP</p>
+  (r-protocols/-data-str d))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.http-rpc" name="shoreleave.remotes.http-rpc"><h1 class="project-name">shoreleave.remotes.http-rpc</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Remote procedure calls over HTTP</p>
 </td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.http-rpc
   (:require [shoreleave.remotes.xhr :as xhr]
             ;[goog.structs.PriorityPool :as priority]
@@ -3153,7 +3169,7 @@ are supported</p>
 <p>You can also set the resource url to something different (the default is "/_fetch"),
 but you must use <code>(binding ...)</code> forms on the client-side</p>
 
-<p>You will most likely use the macros to make these calls.  Here is an example:</p>
+<p>You will most likely use the <code>remote</code> macros to make these calls.  Here is an example:</p>
 
 <pre><code> (srm/rpc  (ping)  [pong-response]
      (js/alert pong-response]))
@@ -3164,27 +3180,41 @@ but you must use <code>(binding ...)</code> forms on the client-side</p>
 <pre><code> (srh/remote-callback "ping" [] #(js/alert %))
 </code></pre>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *remote-uri* &quot;/_fetch&quot;)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn remote-callback [remote params callback &amp; extra-content]
-  (xhr/xhr [:post *remote-uri*]
-           :content (merge
-                      {:remote remote
-                       :params (pr-str params)}
-                      (apply hash-map extra-content))
-           :on-success (when callback
-                         (fn [data]
-                           (let [data (if (= data ) &quot;nil&quot; data)]
-                             (callback (reader/read-string data)))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.jquery" name="shoreleave.remotes.jquery"><h1 class="project-name">shoreleave.remotes.jquery</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.jquery
-  (:use [shoreleave.common :only [clj-&gt;js]]))</pre></td></tr><tr><td class="docs"><p>This uses jQuery's ajax request to perform a remote
-  (potentially cross-origin or jsonp) request</p>
-</td><td class="codes"><pre class="brush: clojure">(defn ajax
-  [url &amp; kw-opts]
-  (let [kw-map (apply hash-map kw-opts)]
-    (.ajax js/jQuery (clj-&gt;js (assoc kw-map :url url)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.jsonp" name="shoreleave.remotes.jsonp"><h1 class="project-name">shoreleave.remotes.jsonp</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Shoreleave's JSONP</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *remote-uri* &quot;/_shoreleave&quot;)</pre></td></tr><tr><td class="docs"><p>Call a remote-callback on the server.
+  Arguments:
+    remote - a string, the name of the remote on the server (eg. specified with a defremote)
+    params - a vector, the parameters to pass to the remote function
+    callback - a map or a function.  The map specifies {:on-success some-f, :on-error another-f}
+                otherwise, just a single function that will be called with on-complete is triggered
+    extra-content - varlist of key-value pairs, extra-content to merge into the payload/content map.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn remote-callback
+  [remote params callback &amp; extra-content]
+  (if (map? callback)
+    (let [{:keys [on-success on-error]} callback] ;;TODO make xhr take *ANY* of the event triggers
+      (xhr/xhr [:post *remote-uri*]
+               :content (merge
+                          {:remote remote
+                           :params (pr-str params)}
+                          (apply hash-map extra-content))
+               :on-success (when on-success
+                             (fn [data]
+                               (let [data (if (= data &quot;&quot;) &quot;nil&quot; data)]
+                                 (on-success (reader/read-string data)))))
+               :on-error (when on-error
+                           (fn [data]
+                             (let [data (if (= data &quot;&quot;) &quot;nil&quot; data)]
+                               (on-error (reader/read-string data)))))))
+    (xhr/xhr [:post *remote-uri*]
+             :content (merge
+                        {:remote remote
+                         :params (pr-str params)}
+                        (apply hash-map extra-content))
+             :on-success (when callback
+                           (fn [data]
+                             (let [data (if (= data &quot;&quot;) &quot;nil&quot; data)]
+                               (callback (reader/read-string data))))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.jsonp" name="shoreleave.remotes.jsonp"><h1 class="project-name">shoreleave.remotes.jsonp</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Shoreleave's JSONP</p>
 </td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.jsonp
-  (:require [goog.net.Jsonp :as jsonp]
-            [shoreleave.common :as common]))</pre></td></tr><tr><td class="docs"><h2>JSON with padding - JSONP</h2>
+  (:require [goog.net.Jsonp :as jsonp]))</pre></td></tr><tr><td class="docs"><h2>JSON with padding - JSONP</h2>
 
 <p>JSONP is a conveinent and widely supported way to make
 cross origin calls.  Shoreleave's support is built Closure's <a href="http://closure-library.googlecode.com/svn/docs/class_goog_net_Jsonp.html">JSONP Object</a>.</p>
@@ -3207,12 +3237,23 @@ cross origin calls.  Shoreleave's support is built Closure's <a href="http://clo
 </td><td class="codes"><pre class="brush: clojure">(defn jsonp [uri &amp; opts]
   (let [{:keys [on-success on-timeout content callback-name callback-value timeout-ms]} opts
         req (goog.net.Jsonp. uri callback-name)
-        data (when content (common/clj-&gt;js content))
+        data (when content (clj-&gt;js content))
         on-success (when on-success #(on-success (js-&gt;clj % :keywordize-keys true)))
-        on-timeout (when on-timeout #(on-timeout (js-&gt;clj % :keywordize-keys true)))
-        ]
+        on-timeout (when on-timeout #(on-timeout (js-&gt;clj % :keywordize-keys true)))]
     (when timeout-ms (.setRequestTimeout req timeout-ms))
-    (.send req data on-success on-timeout callback-value)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.request" name="shoreleave.remotes.request"><h1 class="project-name">shoreleave.remotes.request</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Make network requests.</p>
+    (.send req data on-success on-timeout callback-value)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.protocols" name="shoreleave.remotes.protocols"><h1 class="project-name">shoreleave.remotes.protocols</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.protocols)</pre></td></tr><tr><td class="docs"><h2>TransportData</h2>
+
+<p>To allow full and open interop with Google Closure's lower remote calls,
+(like XhrIo), the Shoreleave function to package up payloads/contents
+is a protocol</p>
+
+<p>This can be extended or shaped for you application's needs.
+Out of the box, there is handling for hashmaps and strings.</p>
+
+<p>That support/implementation can be found in <code>remotes/common.cljs</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defprotocol ITransportData
+  (-data-str [t]))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#shoreleave.remotes.request" name="shoreleave.remotes.request"><h1 class="project-name">shoreleave.remotes.request</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Make network requests.</p>
 
 <p>  Adapted from ClojureScript:One which is...</p>
 
@@ -3225,8 +3266,7 @@ cross origin calls.  Shoreleave's support is built Closure's <a href="http://clo
   (:require [cljs.reader :as reader]
             [clojure.browser.event :as event]
             [goog.net.XhrManager :as manager]
-            [shoreleave.remotes.common :as common])
-  (:use [shoreleave.common :only [clj-&gt;js]]))</pre></td></tr><tr><td class="docs">
+            [shoreleave.remotes.common :as common]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private responders (atom {}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- add-responders [id success error]
   (when (or success error)
@@ -3301,8 +3341,7 @@ cross origin calls.  Shoreleave's support is built Closure's <a href="http://clo
 </td><td class="codes"><pre class="brush: clojure">(ns shoreleave.remotes.xhr
   (:require [goog.net.XhrIo :as xhr]
             [goog.events :as events]
-            [shoreleave.remotes.common :as common])
-  (:use [shoreleave.common :only [clj-&gt;js]]))</pre></td></tr><tr><td class="docs"><h2>XMLHttpRequests - `xhr`</h2>
+            [shoreleave.remotes.common :as common]))</pre></td></tr><tr><td class="docs"><h2>XMLHttpRequests - `xhr`</h2>
 
 <p>You are encouraged to use the xhr pool via the request call.</p>
 
@@ -3312,10 +3351,13 @@ use this function - a wrapper around Closure's <a href="http://closure-library.g
 <p>The <code>(xhr ...)</code> function takes a mandatory <code>route</code> argument, in the format [:method URL-str] -> [:get "/fetch-recent-results"]
 URLs/Routes can also be expressed as <code>\"http://www.google.com\"</code> with a default GET method added</p>
 
+<p>By default, if you don't specify an <code>:on-error</code> handler, errors will be logged to the console</p>
+
 <p>Additional options are passed in as key'd args:</p>
 
 <ul>
 <li>:on-success <code>(fn [result] (js/console.log "This is a callback function for successful requests"))</code></li>
+<li>:on-error <code>(fn [result] (js/console.log "We failed."))</code></li>
 <li>:content <code>{:one-arg "Sending this to the server" :another 5}</code></li>
 <li><p>:headers <code>{}</code> - additional header information</p>
 
@@ -3325,11 +3367,13 @@ URLs/Routes can also be expressed as <code>\"http://www.google.com\"</code> with
 </td><td class="codes"><pre class="brush: clojure">(defn xhr [route &amp; opts]
   (let [req (goog.net.XhrIo.)
         [method uri] (common/parse-route route)
-        {:keys [on-success content headers]} (apply hash-map opts)
+        {:keys [on-success on-error content headers]} (apply hash-map opts)
         content (common/csrf-protected content method)
         data (common/-&gt;data-str content)
-        callback (common/-&gt;simple-callback on-success)]
-    (when callback
-      (events/listen req goog.net.EventType/COMPLETE #(callback req)))
+        suc-callback (common/-&gt;simple-callback on-success)
+        err-callback (common/-&gt;simple-callback (or on-error #(js/console.log (str &quot;XHR ERROR: &quot; %))))]
+    (when suc-callback
+      (events/listen req (common/event-types :on-success) #(suc-callback req))
+      (events/listen req (common/event-types :on-error) #(err-callback req)))
     (.send req uri method data (when headers (clj-&gt;js headers)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
