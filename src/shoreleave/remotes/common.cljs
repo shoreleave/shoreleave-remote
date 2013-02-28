@@ -4,6 +4,7 @@
             [goog.Uri.QueryData :as query-data]
             [goog.structs :as structs]
             [goog.string :as gstr]
+            [goog.net.EventType :as gevent]
             [shoreleave.browser.cookies :as cookies]
             [shoreleave.remotes.protocols :as r-protocols]))
 
